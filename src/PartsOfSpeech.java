@@ -1,5 +1,12 @@
 public class PartsOfSpeech {
 
+    public static final String [] BRACKETS = {
+            "(", ")",
+            "[", "]",
+            "<", ">",
+            "{", "}"
+    };
+
     public static final String[] STANDART_SYMBOLS = {
             "&#963",
             "&#945",
@@ -39,7 +46,7 @@ public class PartsOfSpeech {
             "sth",
     };
 
-    public static final String [] EN_END = {
+    public static final String [] WORD_CLASSES = {
             "past-p",
             "pres-p",
             "suffix",
@@ -255,26 +262,89 @@ public class PartsOfSpeech {
     };
 
     public static final String [] PL = {
-            "",
-            "",
-            "",
-            "",
-            "",
+            "komuś/czemuś",
+            "kogoś/coś",
+            "kimś/czymś",
+            "kogoś/czegoś",
+            "kogoś",
+            "komuś",
+            "kimś",
+            "czegoś",
+            "czemuś",
+            "coś",
+            "czymś",
     };
 
-    public static final String [] s = {
-            "",
+    public static final String [] PT = {
+            "alguém/algo",
+            "alguém",
+            "algo",
     };
 
-    public static final String [] a = {
-            "",
+    public static final String [] RO = {
+            "cineva/ceva",
+            "cuiva/ceva",
+            "cineva",
+            "cuiva",
+            "ceva",
+            "a",
     };
 
-    public static final String [] q = {
-            "",
+    public static final String [] RU = {
+            "кто-л.",
+            "кто-л",
+            "кого-л.",
+            "кого-л",
+            "кому-л.",
+            "кому-л",
+            "кем-л.",
+            "кем-л",
+            "ком-л.",
+            "ком-л",
+            "что-л.",
+            "что-л",
+            "чего-л.",
+            "чего-л",
+            "чему-л.",
+            "чему-л",
+            "чем-л.",
+            "чем-л",
+            "чей-л.",
+            "чей-л",
     };
 
-    public static final String [] w = {
+    public static final String [] SK = {
+            "n-čomu",
+            "n-čoho",
+            "n-kom",
+            "n-čom",
+            "n-čím",
+            "n-čo",
+            "n-ým",
+            "n-mu",
+            "n-ho",
+            "n-o",
+    };
+
+    public static final String [] SV = {
+            "ngn./ngt.",
+            "ngns.",
+            "ngn.",
+            "ngt.",
+    };
+
+    public static final String [] TR = {
+            "b.",
+            "b",
+            "b.ş.",
+            "b.ş",
+            "-de",
+            "-den",
+            "-e",
+            "-i",
+            "-in",
+            "",
+            "",
             "",
     };
 }
