@@ -35,17 +35,6 @@ public class PartsOfSpeech {
             "9"
     };
 
-    public static final String [] EN = {
-            "sb./sth.",
-            "sb./ sth.",
-            "to",
-            "sb.",
-            "sb",
-            "sb.'s",
-            "sth.",
-            "sth",
-    };
-
     public static final String [] WORD_CLASSES = {
             "past-p",
             "pres-p",
@@ -59,6 +48,17 @@ public class PartsOfSpeech {
             "conj",
             "adj.",
             "adj",
+    };
+
+    public static final String [] EN = {
+            "sb./sth.",
+            "sb./ sth.",
+            "to",
+            "sb.",
+            "sb",
+            "sb.'s",
+            "sth.",
+            "sth",
     };
 
     public static final String [] DE = {

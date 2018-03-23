@@ -1,34 +1,39 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DictParser {
 
-    public static final String EMPTY_STRING = "";
-    public static final int DEFAULT_PAIR_NUMBER = 1000000;
+    private static final String EMPTY_STRING = "";
+    private static final int PAIR_NUMBER = 1000000;
 
     private String pathTo;
     private String pathFrom;
 
     private String strPairSeparator;
     private char chPairSeparator;
-    private char startOfString;
     private char endOfString;
 
     private StringBuilder finalText;
     private Map<String, String> pairMap;
 
-    private String [] customWordClasses;
-    private String [] firstLangAbbrs;
-    private String [] secLangAbbrs;
+    private String[] customWordClasses;
+    private String[] firstLangAbbrs;
+    private String[] secLangAbbrs;
 
-    private Language firstLang;
-    private Language secLang;
+    private LanguageTextUtils.Language firstLang;
+    private LanguageTextUtils.Language secLang;
 
-    DictParser(String pathFrom, String pathTo, char chPairSeparator, char endOfString, Language firstLang, Language secLang) {
+    private boolean checkForSingleWords = true;
+
+    DictParser(String pathFrom,
+               String pathTo,
+               char chPairSeparator,
+               char endOfString,
+               LanguageTextUtils.Language firstLang,
+               LanguageTextUtils.Language secLang) {
+
         this.pathFrom = pathFrom;
         this.pathTo = pathTo;
         this.chPairSeparator = chPairSeparator;
@@ -36,235 +41,189 @@ public class DictParser {
         this.firstLang = firstLang;
         this.secLang = secLang;
         strPairSeparator = new String(new char[]{chPairSeparator});
+        finalText = new StringBuilder(PAIR_NUMBER * 10);
+        pairMap = new HashMap<>(PAIR_NUMBER);
     }
 
-    private void writeToFile() {
-        System.out.println("writing");
-        try {
-            FileWriter writer = new FileWriter(pathTo);
-            writer.write(finalText.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void processFile() {
+        StringBuilder pair = new StringBuilder();
+        List<String> text = FileReader.readFile(pathFrom);
+
+        if (text == null) {
+            return;
         }
-    }
 
-    private void readFile() {
-        System.out.println("reading");
+        text.forEach(n -> {
+            pair.append(n);
+            parse(pair);
 
-        Path path = Paths.get(pathFrom);
-
-        if (Files.isReadable(path)) {
-            StringBuilder pair = new StringBuilder(100);
-
-            try {
-                Files.readAllLines(path).forEach(n -> {
-                    pair.append(n);
-                    parse(pair);
-
-                    finalText.append(pair);
-                    pair.delete(0, pair.length());
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (pair.length() < 40 & isSingleWord(pair) & !pairMap.containsKey(pair.substring(0, pair.charAt(chPairSeparator)))) {
+                finalText.append(pair);
             }
-        }
+
+            pair.delete(0, pair.length());
+        });
+
+        FileReader.writeToFile(finalText, pathTo);
     }
 
     private void parse(StringBuilder pair) {
         System.out.println("Parsing");
 
-        checkExcessStrings(pair, customWordClasses, firstLangAbbrs, secLangAbbrs);
+        checkExcessStrings(pair);
+        removeExcessVariants(pair);
         checkForBrackets(pair);
     }
 
-    private void removeExcessVariants(StringBuilder pair){
+    private void removeExcessVariants(StringBuilder pair) {
+        while (pair.indexOf("/") != -1) {
+            String firstWord = LanguageTextUtils.selectWholeWord(pair.toString(), pair.indexOf("/") - 2);
+            firstWord = firstWord.trim();
+            firstWord = firstWord.toLowerCase();
 
-        while (pair.indexOf("/") != -1){
-            if (selectWholeWord(pair.toString(), pair.indexOf("/") - 2).trim().toLowerCase().equals(selectWholeWord(pair.toString(), pair.indexOf("/") + 2).trim().toLowerCase())){
-                pair.delete(pair.indexOf("/") - selectWholeWord(pair.toString(), pair.indexOf("/") -2).length(), pair.indexOf("/") + 2);
+            String secondWord = LanguageTextUtils.selectWholeWord(pair.toString(), pair.indexOf("/") + 2);
+            secondWord = secondWord.trim();
+            secondWord = secondWord.toLowerCase();
+
+            int wordLength = LanguageTextUtils.selectWholeWord(pair.toString(), pair.indexOf("/") - 2).length();
+
+            int firstIndex = pair.indexOf("/") - wordLength;
+            int secIndex = pair.indexOf("/") + 2;
+
+            if (firstWord.equals(secondWord)){
+                pair.delete(firstIndex, secIndex);
             }
         }
+    }
+
+    private boolean isSingleWord(StringBuilder pair){
+        if (!checkForSingleWords){
+            return true;
+        }
+
+        return true;
     }
 
     private void checkForBrackets(StringBuilder pair){
         for (int i = 0; i < PartsOfSpeech.BRACKETS.length - 1; i = i + 2) {
             String startBracket = PartsOfSpeech.BRACKETS[i];
-            String endBracket = PartsOfSpeech.BRACKETS[i+1];
+            String endBracket = PartsOfSpeech.BRACKETS[i + 1];
 
-            while (pair.indexOf(startBracket) != -1 & pair.indexOf(endBracket) != -1){
-                int startIndex = pair.indexOf(startBracket);
-                int endIndex = pair.indexOf(endBracket);
+            if (startBracket.equals(strPairSeparator)
+                    | endBracket.equals(strPairSeparator)){
+                continue;
+            }
 
-                if (pair.indexOf(startBracket) != 0
-                        && pair.charAt(pair.indexOf(startBracket) - 1) == '\t'
-                        && endIndex + 1 <= pair.length() - 1){
-                    boolean ans = true;
+            int fromIndex = 0;
 
-                    for (String ch: PartsOfSpeech.BRACKETS) {
-                        if ( String.valueOf(pair.charAt(pair.indexOf(endBracket)+1)).equals(ch)){
-                            ans = false;
-                        }
+            int startBracketIndex = 0;
+            int endBracketIndex = 0;
+
+            while (pair.indexOf(startBracket, fromIndex) != -1){
+                startBracketIndex = pair.indexOf(startBracket, fromIndex);
+
+                if (pair.indexOf(endBracket, fromIndex) != -1){
+                    endBracketIndex = pair.indexOf(endBracket, fromIndex);
+
+                    if (pair.substring(startBracketIndex + 1, endBracketIndex).contains(startBracket)){
+                        fromIndex = startBracketIndex + 1;
+                        continue;
                     }
 
-                    if (ans & endIndex + 1 <= pair.length() - 1) endIndex++;
+                    pair.delete(startBracketIndex, endBracketIndex + 1);
 
+                    fromIndex = 0;
                 }
-
-                StringBuilder temp = new StringBuilder();
-                for (int j = startIndex;j <= endIndex; j++){
-
-                    if (String.valueOf(pair.charAt(j)).equals(startBracket)){
-                        temp.delete(0, temp.length());
-                    }
-
-                    temp.append(pair.charAt(j));
-                }
-
-                pair.replace(pair.indexOf(temp.toString()), pair.indexOf(temp.toString()) + temp.length(), EMPTY_STRING);
             }
         }
     }
 
-    private void checkExcessStrings(StringBuilder pair, String [] customWordClasses, String [] firstLangAbbrs, String [] secLangAbbrs) {
-        String [] wordClasses = customWordClasses == null ? PartsOfSpeech.WORD_CLASSES : customWordClasses;
-        String [] firstAbbrs = firstLangAbbrs == null ? getLanguageAbbereviations(firstLang) : firstLangAbbrs;
-        String [] secAbbrs = secLangAbbrs == null ? getLanguageAbbereviations(secLang) : secLangAbbrs;
+    private void checkExcessStrings(StringBuilder pair) {
+        String[] wordClasses = customWordClasses == null ? PartsOfSpeech.WORD_CLASSES : customWordClasses;
+        String[] firstAbbrs = firstLangAbbrs == null ? LanguageTextUtils.getLanguageAbbereviations(firstLang) : firstLangAbbrs;
+        String[] secAbbrs = secLangAbbrs == null ? LanguageTextUtils.getLanguageAbbereviations(secLang) : secLangAbbrs;
 
         for (int i = 0; i < 3; i++) {
-        for (String wordClass : wordClasses){
-            if (pair.lastIndexOf(wordClass) != - 1
-                    & pair.charAt(pair.lastIndexOf(wordClass) - 1) == (' ')
-                    & pair.charAt(pair.lastIndexOf(wordClass) + wordClass.length() + 1) == (' '|endOfString)){
-                pair.replace(pair.lastIndexOf(wordClass), pair.lastIndexOf(wordClass) + wordClass.length(), EMPTY_STRING);
+            for (String wordClass : wordClasses) {
+                int match = pair.lastIndexOf(wordClass);
+
+                if (match > pair.indexOf(strPairSeparator)
+                        & match != -1
+                        & pair.charAt(match - 1) == (' ')
+                        & pair.charAt(match + wordClass.length()) == (' ' | endOfString)) {
+                    pair.replace(match, match + wordClass.length(), EMPTY_STRING);
+                }
             }
-        }
         }
 
         int newVal;
-        int fromindex = 0;
+        int fromIndex = 0;
 
-        if (firstAbbrs != null){
+        if (firstAbbrs != null) {
             for (String abbr : firstAbbrs) {
-                while (pair.indexOf(abbr, fromindex) < pair.indexOf(strPairSeparator) & pair.indexOf(abbr, fromindex) != -1){
-                    newVal = pair.indexOf(abbr);
-                    if (pair.charAt(pair.indexOf(abbr) - 1) == ' ' | pair.indexOf(abbr) == 0
-                            & pair.charAt(pair.indexOf(abbr) + abbr.length() + 1) == (' '|this.chPairSeparator)) {
-                        pair.replace(pair.indexOf(abbr, fromindex), pair.indexOf(abbr, fromindex) + abbr.length(), EMPTY_STRING);
+                while (pair.indexOf(abbr, fromIndex) < pair.indexOf(strPairSeparator) | pair.indexOf(abbr, fromIndex) != -1) {
+
+                    newVal = pair.indexOf(abbr, fromIndex);
+                    int match = pair.indexOf(abbr, fromIndex);
+
+                    if (pair.charAt(match - 1) == ' ' | match == 0
+                            & pair.charAt(match + abbr.length()) == (' ' | this.chPairSeparator)) {
+                        pair.replace(match, match + abbr.length(), EMPTY_STRING);
+                    } else {
+                        newVal += abbr.length();
                     }
-                    fromindex = newVal;
+
+                    fromIndex = newVal;
                 }
             }
         }
 
-        fromindex = pair.indexOf(strPairSeparator);
+        fromIndex = pair.indexOf(strPairSeparator);
 
-        if (secAbbrs != null){
+        if (secAbbrs != null) {
             for (String abbr : secAbbrs) {
-                while (pair.indexOf(abbr, pair.indexOf(strPairSeparator)) != -1){
-                    newVal = pair.indexOf(abbr);
-                    if (pair.charAt(pair.indexOf(abbr) - 1) == (this.chPairSeparator |' ')
-                            & pair.charAt(pair.indexOf(abbr) + abbr.length() + 1) == (' '|endOfString)) {
-                        pair.replace(pair.indexOf(abbr, fromindex), pair.indexOf(abbr, fromindex) + abbr.length(), EMPTY_STRING);
+                while (pair.indexOf(abbr, fromIndex) != -1) {
+
+                    newVal = pair.indexOf(abbr, fromIndex);
+                    int match = pair.indexOf(abbr, fromIndex);
+
+                    if (pair.charAt(match - 1) == (this.chPairSeparator | ' ')
+                            & pair.charAt(match + abbr.length()) == (' ' | endOfString)) {
+                        pair.replace(match, match + abbr.length(), EMPTY_STRING);
+                    } else {
+                        newVal += abbr.length();
                     }
-                    fromindex = newVal;
+
+                    fromIndex = newVal;
                 }
             }
         }
-    }
 
-    enum Language {
-        EN, DE, RU, UA, BG,
-        BS, CS, DA, EL, EO,
-        ES, FI, FR, HR, HU,
-        IS, IT, LA, NL, NO,
-        PL, PT, RO, SK, SQ,
-        SR, SV, TR;
-    }
+        for (String symb : PartsOfSpeech.STANDART_SYMBOLS) {
+            while (pair.indexOf(symb) != -1) {
 
-    private String[] getLanguageAbbereviations(Language lang) {
-        switch (lang) {
-            case EN:
-                return PartsOfSpeech.EN;
-            case DE:
-                return PartsOfSpeech.DE;
-            case RU:
-                return PartsOfSpeech.RU;
-            case BG:
-                return PartsOfSpeech.BG;
-            case CS:
-                return PartsOfSpeech.CS;
-            case DA:
-                return PartsOfSpeech.DA;
-            case EO:
-                return PartsOfSpeech.EO;
-            case ES:
-                return PartsOfSpeech.ES;
-            case FI:
-                return PartsOfSpeech.FI;
-            case FR:
-                return PartsOfSpeech.FR;
-            case HU:
-                return PartsOfSpeech.HU;
-            case IS:
-                return PartsOfSpeech.IS;
-            case IT:
-                return PartsOfSpeech.IT;
-            case LA:
-                return PartsOfSpeech.LA;
-            case NL:
-                return PartsOfSpeech.NL;
-            case NO:
-                return PartsOfSpeech.NO;
-            case PL:
-                return PartsOfSpeech.PL;
-            case PT:
-                return PartsOfSpeech.PT;
-            case RO:
-                return PartsOfSpeech.RO;
-            case SK:
-                return PartsOfSpeech.SK;
-            case SV:
-                return PartsOfSpeech.SV;
-            case TR:
-                return PartsOfSpeech.TR;
+                if (symb.equals(strPairSeparator)) {
+                    continue;
+                }
 
-            default:
-                return null;
-        }
-    }
-
-    private String selectWholeWord(String wholeText, int index){
-        StringBuilder temp = new StringBuilder(new String(new char[]{wholeText.charAt(index)}));
-        StringBuilder result = new StringBuilder();
-        char ch = ' ';
-
-        for (int i = index; wholeText.charAt(i) != ch; i++) {
-            temp.append(wholeText.charAt(i));
-        }
-
-
-
-        for (int i = index; wholeText.charAt(i) != ch; i--) {
-            result.append(wholeText.charAt(i));
-        }
-
-        return result.reverse().append(temp).toString();
-    }
-
-    private String removeExcessSpaces(){
-        return null;
-    }
-
-    private String removeAllSpaces(String string){
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < string.length(); i++) {
-            if (string.charAt(i) == ' '){
-                continue;
+                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + 1, " ");
             }
-            builder.append(string.charAt(i));
         }
+    }
 
-        return builder.toString();
+    public void setCustomWordClasses(String[] wordClasses) {
+        customWordClasses = wordClasses;
+    }
+
+    public void setFirstLanguageAbbreviations(String[] languageAbbreviations) {
+        firstLangAbbrs = languageAbbreviations;
+    }
+
+    public void setSecondLanguageAbbreviations(String[] languageAbbreviations) {
+        secLangAbbrs = languageAbbreviations;
+    }
+
+    public void setCheckForSingleWords(boolean needToCheck){
+        checkForSingleWords = needToCheck;
     }
 }
