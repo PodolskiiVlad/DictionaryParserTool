@@ -4,7 +4,44 @@ public class PartsOfSpeech {
             "(", ")",
             "[", "]",
             "<", ">",
-            "{", "}"
+            "{", "}",
+            "«", "»"
+    };
+
+    public static final String [] LAST_CLEAN_SYBM = {
+            "!",
+            "@",
+            "#",
+            "$",
+            "%",
+            "^",
+            "&",
+            "*",
+            "_",
+            "-",
+            "=",
+            ";",
+            ":",
+            "\"",
+            "/",
+            "\\",
+            "(",
+            ")",
+            "<",
+            ">",
+            "[",
+            "[",
+            "|",
+            ".",
+            ",",
+            "+",
+            "~",
+            "`",
+            "©",
+            "®",
+            "°",
+            "«",
+            "»",
     };
 
     public static final String[] STANDART_SYMBOLS = {
@@ -14,6 +51,13 @@ public class PartsOfSpeech {
             ";",
             "...",
             ",",
+            "–",
+            "A-",
+            "A ",
+            "a-",
+            "\tA ",
+            "\tto",
+            "\tTo",
             "-",
             "®",
             ".",
@@ -32,7 +76,17 @@ public class PartsOfSpeech {
             "6",
             "7",
             "8",
-            "9"
+            "9",
+            " a ",
+    };
+
+    public static final String [] ALPHABET_SYMBOLS = {
+            "Q ", "W ", "E ", "R ", "T ", "Y ", "U ", "I ", "O ", "P ", "A ", "S ", "D ", "F ", "G ", "H ", "J ", "K ", "L ", "Z ", "X ", "C ", "V ", "B ", "N ", "M ",
+            "Q-", "W-", "E-", "R-", "T-", "Y-", "U-", "I-", "O-", "P-", "A-", "S-", "D-", "F-", "G-", "H-", "J-", "K-", "L-", "Z-", "X-", "C-", "V-", "B-", "N-", "M-",
+            "Q.", "W.", "E.", "R.", "T.", "Y.", "U.", "I.", "O.", "P.", "A.", "S.", "D.", "F.", "G.", "H.", "J.", "K.", "L.", "Z.", "X.", "C.", "V.", "B.", "N.", "M.",
+            " q ", " w ", " e ", " r ", " t ", " y ", " u ", " i ", " o ", " p ", " a ", " s ", " d ", " f ", " g ", " h ", " j ", " k ", " l ", " z ", " x ", " c ", " v ", " b ", " n ", " m ",
+            " q-", " w-", " e-", " r-", " t-", " y-", " u-", " i-", " o-", " p-", " a-", " s-", " d-", " f-", " g-", " h-", " j-", " k-", " l-", " z-", " x-", " c-", " v-", " b-", " n-", " m-",
+            " q.", " w.", " e.", " r.", " t.", " y.", " u.", " i.", " o.", " p.", " a.", " s.", " d.", " f.", " g.", " h.", " j.", " k.", " l.", " z.", " x.", " c.", " v.", " b.", " n.", " m."
     };
 
     public static final String [] WORD_CLASSES = {
@@ -59,6 +113,9 @@ public class PartsOfSpeech {
             "sb.'s",
             "sth.",
             "sth",
+            "the ",
+            " the",
+            "the",
     };
 
     public static final String [] DE = {
@@ -95,6 +152,18 @@ public class PartsOfSpeech {
             "sb",
             "jds.",
             "jds",
+            "das ",
+            " das",
+            "das",
+            "der ",
+            "des ",
+            " des",
+            "des",
+            " der",
+            "der",
+            "ist ",
+            " ist",
+            "ist",
     };
 
     public static final String [] BG = {
