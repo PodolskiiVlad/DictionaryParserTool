@@ -53,11 +53,11 @@ public class PartsOfSpeech {
             ",",
             "–",
             "A-",
-            "A ",
             "a-",
-            "\tA ",
-            "\tto",
-            "\tTo",
+            "A",
+            "a",
+            "to",
+            "To",
             "-",
             "®",
             ".",
@@ -80,13 +80,8 @@ public class PartsOfSpeech {
             " a ",
     };
 
-    public static final String [] ALPHABET_SYMBOLS = {
-            "Q ", "W ", "E ", "R ", "T ", "Y ", "U ", "I ", "O ", "P ", "A ", "S ", "D ", "F ", "G ", "H ", "J ", "K ", "L ", "Z ", "X ", "C ", "V ", "B ", "N ", "M ",
-            "Q-", "W-", "E-", "R-", "T-", "Y-", "U-", "I-", "O-", "P-", "A-", "S-", "D-", "F-", "G-", "H-", "J-", "K-", "L-", "Z-", "X-", "C-", "V-", "B-", "N-", "M-",
-            "Q.", "W.", "E.", "R.", "T.", "Y.", "U.", "I.", "O.", "P.", "A.", "S.", "D.", "F.", "G.", "H.", "J.", "K.", "L.", "Z.", "X.", "C.", "V.", "B.", "N.", "M.",
-            " q ", " w ", " e ", " r ", " t ", " y ", " u ", " i ", " o ", " p ", " a ", " s ", " d ", " f ", " g ", " h ", " j ", " k ", " l ", " z ", " x ", " c ", " v ", " b ", " n ", " m ",
-            " q-", " w-", " e-", " r-", " t-", " y-", " u-", " i-", " o-", " p-", " a-", " s-", " d-", " f-", " g-", " h-", " j-", " k-", " l-", " z-", " x-", " c-", " v-", " b-", " n-", " m-",
-            " q.", " w.", " e.", " r.", " t.", " y.", " u.", " i.", " o.", " p.", " a.", " s.", " d.", " f.", " g.", " h.", " j.", " k.", " l.", " z.", " x.", " c.", " v.", " b.", " n.", " m."
+    public static final String [] SINGLE_SYMBOLS = {
+            "q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","z","x","c","v","b","n","m"
     };
 
     public static final String [] WORD_CLASSES = {
@@ -113,8 +108,6 @@ public class PartsOfSpeech {
             "sb.'s",
             "sth.",
             "sth",
-            "the ",
-            " the",
             "the",
     };
 
@@ -152,18 +145,13 @@ public class PartsOfSpeech {
             "sb",
             "jds.",
             "jds",
-            "das ",
-            " das",
             "das",
-            "der ",
-            "des ",
-            " des",
+            "die",
             "des",
-            " der",
             "der",
-            "ist ",
-            " ist",
             "ist",
+            "du",
+            "war"
     };
 
     public static final String [] BG = {

@@ -6,7 +6,8 @@ public class DictParser {
 
     private static final String EMPTY_STRING = "";
     private static final int PAIR_NUMBER = 1000000;
-    private static  int currentPair = 0;
+    private static int currentPair = 0;
+    private static int currentWritedPair = 0;
 
     private String pathTo;
     private String pathFrom;
@@ -56,19 +57,21 @@ public class DictParser {
         text.forEach(n -> {
             pair.append(n);
 
-            if (!pair.toString().endsWith(String.valueOf(endOfString))){
+            if (!pair.toString().endsWith(String.valueOf(endOfString))) {
                 pair.append(endOfString);
             }
 
-            if (parse(pair)){
+            if (parse(pair)) {
 
                 boolean isSingleLangWord = !checkForSingleWords || LanguageTextUtils.isSingleLangWord(pair, strPairSeparator);
 
                 String originWord = pair.substring(0, pair.indexOf(strPairSeparator));
+                validate(pair);
                 boolean isMapContainsKey = !pairMap.containsKey(originWord);
 
-                if (isSingleLangWord & isMapContainsKey) {
+                if (isSingleLangWord & isMapContainsKey & pair.length() < 40) {
                     finalText.append(pair);
+                    currentWritedPair++;
                 }
 
             }
@@ -79,52 +82,50 @@ public class DictParser {
         FileReader.writeToFile(finalText, pathTo);
     }
 
+    private boolean validate(StringBuilder pair) {
+        String firstPart = pair.substring(0, pair.charAt(chPairSeparator)).trim();
+        String secondPart = pair.substring(pair.charAt(chPairSeparator), pair.length()).trim();
+
+        if (firstPart.equals(strPairSeparator) | firstPart.length() == 0 | firstPart.equals(strPairSeparator+endOfString)){
+
+        }
+        return true;
+    }
+
     private boolean parse(StringBuilder pair) {
         System.out.println("Parsing");
 
-        if (pair.toString().contains("(Abstehender) Salzschwingel {m}\treflexed saltmarsh-grass / saltmarsh grass [Puccinellia distans, syn.: P. capillaris, P. limosa, P sevamgensis, Atropis distans, Glyceria distans, Poa distans]\tnoun\n")){
+        if (pair.toString().contains("M&A-Transaktionen")) {
             System.out.println("Notice");
         }
 
+        LanguageTextUtils.cleanString(pair, strPairSeparator);
         checkForExcessStrings(pair);
         checkForBrackets(pair);
         removeExcessVariants(pair);
 
         String strPair = pair.toString().toLowerCase().trim();
 
-        if (strPair.length() == 0 ){
+        if (strPair.length() == 0) {
             return false;
         }
 
         LanguageTextUtils.cleanString(pair, strPairSeparator);
-        lastClean(pair);
+        LanguageTextUtils.lastClean(pair, strPairSeparator);
+        checkWordsToRemove(pair);
+        LanguageTextUtils.cleanString(pair, strPairSeparator);
 
         System.out.println("String = " + pair);
         currentPair++;
         System.out.println("Current pair = " + currentPair);
+        System.out.println("Current wr pair = " + currentWritedPair);
 
         return true;
     }
 
-    private void lastClean(StringBuilder pair){
-        for (String symb: PartsOfSpeech.LAST_CLEAN_SYBM) {
-            if (symb.equals(strPairSeparator)){
-                continue;
-            }
-
-           while (pair.indexOf(symb) != -1){
-                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), " ");
-           }
-        }
-
-        LanguageTextUtils.removeExcessSpaces(pair);
-        LanguageTextUtils.removeSpaceBeforeSeparator(pair, strPairSeparator);
-
-    }
-
     private void removeExcessVariants(StringBuilder pair) {
         while (pair.indexOf("/") != -1) {
-            String wordsToChoose = LanguageTextUtils.selectWordsFromDefinitions(pair.toString(), pair.indexOf("/") - 2, chPairSeparator, endOfString);
+            String wordsToChoose = LanguageTextUtils.selectWordFromDif(pair.toString(), pair.indexOf("/") - 1, chPairSeparator, endOfString);
             int separatorIndex = wordsToChoose.indexOf("/");
 
             String firstWord = wordsToChoose.substring(0, separatorIndex);
@@ -133,29 +134,29 @@ public class DictParser {
             String secondWord = wordsToChoose.substring(separatorIndex + 1, wordsToChoose.length());
             secondWord = secondWord.trim().toLowerCase();
 
-            int lastDelIndex = secondWord.length();
+            int delFrom;
+            int delTo;
 
-            for (int i = 0; i <= 3; i++){
-                if (lastDelIndex != pair.indexOf(strPairSeparator)){
-                    lastDelIndex++;
-                }
-            }
-
-            if (firstWord.length() > secondWord.length()){
-                pair.delete(pair.indexOf("/") - firstWord.length() - 1, pair.indexOf("/") + 1);
+            if (firstWord.length() > secondWord.length()) {
+                delFrom = pair.indexOf("/") - firstWord.length();
+                delTo = pair.indexOf("/") + 1;
             } else {
-                pair.delete(pair.indexOf("/"), pair.indexOf("/") + secondWord.length() + 3);
+                delFrom = pair.indexOf("/");
+                delTo = pair.indexOf("/") + secondWord.length() + 1;
             }
+
+            pair.delete(delFrom, delTo);
         }
+        LanguageTextUtils.cleanString(pair, strPairSeparator);
     }
 
-    private void checkForBrackets(StringBuilder pair){
+    private void checkForBrackets(StringBuilder pair) {
         for (int i = 0; i < PartsOfSpeech.BRACKETS.length - 1; i = i + 2) {
             String startBracket = PartsOfSpeech.BRACKETS[i];
             String endBracket = PartsOfSpeech.BRACKETS[i + 1];
 
             if (startBracket.equals(strPairSeparator)
-                    | endBracket.equals(strPairSeparator)){
+                    | endBracket.equals(strPairSeparator)) {
                 continue;
             }
 
@@ -164,13 +165,13 @@ public class DictParser {
             int startBracketIndex;
             int endBracketIndex;
 
-            while (pair.indexOf(startBracket, fromIndex) != -1){
+            while (pair.indexOf(startBracket, fromIndex) != -1) {
                 startBracketIndex = pair.indexOf(startBracket, fromIndex);
 
-                if (pair.indexOf(endBracket, fromIndex) != -1){
+                if (pair.indexOf(endBracket, fromIndex) != -1) {
                     endBracketIndex = pair.indexOf(endBracket, fromIndex);
 
-                    if (pair.substring(startBracketIndex + 1, endBracketIndex).contains(startBracket)){
+                    if (pair.substring(startBracketIndex + 1, endBracketIndex).contains(startBracket)) {
                         fromIndex = startBracketIndex + 1;
                         continue;
                     }
@@ -181,6 +182,7 @@ public class DictParser {
                 }
             }
         }
+        LanguageTextUtils.cleanString(pair, strPairSeparator);
     }
 
     private void checkForExcessStrings(StringBuilder pair) {
@@ -192,7 +194,7 @@ public class DictParser {
             for (String wordClass : wordClasses) {
                 int match = pair.lastIndexOf(wordClass);
 
-                if (match == -1 | match < pair.indexOf(strPairSeparator)){
+                if (match == -1 | match < pair.indexOf(strPairSeparator)) {
                     continue;
                 }
 
@@ -219,24 +221,11 @@ public class DictParser {
                     newVal = pair.indexOf(abbr, fromIndex);
                     int match = pair.indexOf(abbr, fromIndex);
 
-                    if (match == -1){
+                    if (match == -1) {
                         continue;
                     }
 
-                    char charBeforeMatchIndex = ' ';
-                    char charAfterMatch = ' ';
-
-                    if (match != 0){
-                       charBeforeMatchIndex = pair.charAt(match - 1);
-                    }
-
-                    if (match + abbr.length() + 1 <= pair.length()){
-                        charAfterMatch = pair.charAt(match + abbr.length());
-                    }
-
-                    if (charBeforeMatchIndex == ' '
-                            | match == 0
-                            & (charAfterMatch == ' ' | charAfterMatch == this.chPairSeparator)) {
+                    if (LanguageTextUtils.isSingleWord(newVal, abbr, pair, chPairSeparator, endOfString)) {
                         pair.replace(match, match + abbr.length(), EMPTY_STRING);
                     } else {
                         newVal += abbr.length();
@@ -244,6 +233,7 @@ public class DictParser {
 
                     fromIndex = newVal;
                 }
+                fromIndex = 0;
             }
         }
 
@@ -256,15 +246,11 @@ public class DictParser {
                     newVal = pair.indexOf(abbr, fromIndex);
                     int match = pair.indexOf(abbr, fromIndex);
 
-                    if (match == -1){
+                    if (match == -1) {
                         continue;
                     }
 
-                    char charBeforeMatchIndex = pair.charAt(match - 1);
-                    char charAfterMatch = pair.charAt(match + abbr.length());
-
-                    if ((charBeforeMatchIndex == this.chPairSeparator | charBeforeMatchIndex ==  ' ')
-                            & (charAfterMatch == ' ' | charAfterMatch == endOfString | charAfterMatch == chPairSeparator)) {
+                    if (LanguageTextUtils.isSingleWord(newVal, abbr, pair, chPairSeparator, endOfString)) {
                         pair.replace(match, match + abbr.length(), EMPTY_STRING);
                     } else {
                         newVal += abbr.length();
@@ -276,9 +262,18 @@ public class DictParser {
         }
 
         for (String symb : PartsOfSpeech.STANDART_SYMBOLS) {
-            while (pair.indexOf(symb) != -1) {
+            fromIndex = 0;
+            while (pair.indexOf(symb, fromIndex) != -1) {
+                int matchIndex = pair.indexOf(symb, fromIndex);
 
                 if (symb.equals(strPairSeparator)) {
+                    fromIndex = pair.indexOf(symb, fromIndex) + 1;
+                    continue;
+                }
+
+                if ((symb.equals("A") | symb.equals("To") | symb.equals("to") | symb.equals("a"))
+                        & !LanguageTextUtils.isSingleWord(matchIndex, symb, pair, chPairSeparator, endOfString)) {
+                    fromIndex = pair.indexOf(symb, fromIndex) + 1;
                     continue;
                 }
 
@@ -286,19 +281,28 @@ public class DictParser {
             }
         }
 
-        for (String letter: PartsOfSpeech.ALPHABET_SYMBOLS) {
-            if (pair.indexOf(letter) != -1) {
+        checkWordsToRemove(pair);
 
-                if (letter.endsWith(".") | letter.endsWith("-") & letter.startsWith("\t") | letter.endsWith("\t")) {
-                    pair.replace(pair.indexOf(letter), pair.indexOf(letter) + letter.length(), "\t");
+        LanguageTextUtils.cleanString(pair, strPairSeparator);
+    }
+
+    private void checkWordsToRemove(StringBuilder pair){
+        for (String letter : PartsOfSpeech.SINGLE_SYMBOLS) {
+            int fromIndex = 0;
+            while (pair.indexOf(letter, fromIndex) != -1) {
+
+                if (letter.equals("a")){
+                    System.out.println("Notice");
+                }
+
+                int match = pair.indexOf(letter, fromIndex);
+
+                if (LanguageTextUtils.isSingleWord(match, letter, pair, chPairSeparator, endOfString)) {
+                    pair.replace(match, match + letter.length(), " ");
                     continue;
                 }
 
-                char charAfterLetter = pair.charAt(pair.indexOf(letter)+letter.length());
-
-                if (pair.indexOf(letter) == 0 & (charAfterLetter == ' ' | charAfterLetter != '\t')) {
-                    pair.replace(pair.indexOf(letter), pair.indexOf(letter) + letter.length(), "");
-                }
+                fromIndex = match + 1;
             }
         }
     }
@@ -315,7 +319,7 @@ public class DictParser {
         secLangAbbrs = languageAbbreviations;
     }
 
-    public void setCheckForSingleWords(boolean needToCheck){
+    public void setCheckForSingleWords(boolean needToCheck) {
         checkForSingleWords = needToCheck;
     }
 }

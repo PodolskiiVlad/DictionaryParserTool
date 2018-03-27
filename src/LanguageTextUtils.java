@@ -1,42 +1,105 @@
 public class LanguageTextUtils {
 
-    public static String selectWordsFromDefinitions(String wholeText, int index, char separator, char endOfString) {
-        StringBuilder result = new StringBuilder();
+    public static void removeSpaceBeforeSeparators(StringBuilder pair, String separator) {
+        String[] separators = {" " + separator + " ", separator + " ", " " + separator, " / ", " /", "/ ", " // ", " //", "// ",};
 
-        StringBuilder left = new StringBuilder();
-        StringBuilder right = new StringBuilder();
+        for (String symb : separators) {
 
-        int leftIndex = index;
-        int rightIndex = index + 4;
-        do {
-            if (leftIndex < 0 | rightIndex >= wholeText.length()) {
+            if (symb.equals(separators[0]) | symb.equals(separators[1]) | symb.equals(separators[2])) {
+                while (pair.indexOf(symb) != -1) {
+                    pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), separator);
+                }
+                continue;
+            }
+
+            while (pair.indexOf(" " + symb) != -1 | pair.indexOf(symb + " ") != -1) {
+                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), symb.trim());
+            }
+        }
+    }
+
+    public static void lastClean(StringBuilder pair, String strPairSeparator) {
+        for (String symb : PartsOfSpeech.LAST_CLEAN_SYBM) {
+            if (symb.equals(strPairSeparator)) {
+                continue;
+            }
+
+            while (pair.indexOf(symb) != -1) {
+                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), " ");
+            }
+        }
+
+        LanguageTextUtils.removeExcessSpaces(pair);
+        LanguageTextUtils.removeSpaceBeforeSeparators(pair, strPairSeparator);
+
+    }
+
+    public static String selectWordFromDif(String wholeText, int index, char separator, char endOfString) {
+
+        StringBuilder leftDef = new StringBuilder();
+        StringBuilder rightDef = new StringBuilder();
+
+        boolean searchInLeft = true;
+        boolean searchInRight = true;
+
+        int leftSearchIndex = index;
+        int rightSearchIndex = index + 2;
+
+        StringBuilder equal = new StringBuilder();
+
+        for (; ; ) {
+            String newString = getNextWords(wholeText, leftSearchIndex, searchInLeft, rightSearchIndex, searchInRight, separator, endOfString);
+
+            if (newString.equals("/")) {
                 break;
             }
 
-            getWholeWord(wholeText, leftIndex, rightIndex, left, right, separator, endOfString);
-            rightIndex = right.length();
-            leftIndex = -left.length();
-            left.insert(0, ' ');
+            String leftWord = newString.substring(0, newString.indexOf('/'));
+            String rightWord = newString.substring(newString.indexOf('/') + 1, newString.length());
 
-        }
-        while (!removeAllSpaces(left.toString().toLowerCase().trim()).equals(removeAllSpaces(right.toString().toLowerCase().trim())));
-
-        return result.append(left).append('/').append(right).toString().trim();
-    }
-
-    public static void removeSpaceBeforeSeparator(StringBuilder pair, String separator) {
-        String[] separators = {" " + separator, separator + " "};
-
-        for (String symb : separators) {
-            if (pair.indexOf(symb) != -1) {
-                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), separator);
+            if (wholeText.indexOf(leftWord + "/") != 0
+                    | wholeText.charAt(wholeText.indexOf(leftWord + "/")) != ' '
+                    | wholeText.charAt(wholeText.indexOf(leftWord + "/")) != separator) {
+                searchInLeft = false;
             }
+
+            if (wholeText.indexOf("/" + rightWord) + rightWord.length() != wholeText.length() - 1
+                    | wholeText.charAt(wholeText.indexOf("/" + rightWord)) != ' '
+                    | wholeText.charAt(wholeText.indexOf("/" + rightWord)) != separator) {
+                searchInRight = false;
+            }
+
+            leftDef.append(leftWord).append(' ');
+            rightDef.append(rightWord).append(' ');
+
+            if (removeAllSpaces(leftDef.toString())
+                    .equals(removeAllSpaces(rightDef.toString()))) {
+                equal.delete(0, equal.length());
+                equal.append(leftDef).append('/').append(rightDef);
+            }
+
+        }
+
+        if (equal.length() > 0) {
+            return equal.toString();
+        } else {
+            return getNextWords(wholeText, index, true, index + 2, true, separator, endOfString);
         }
     }
 
-    private static void getWholeWord(String wholeText, int leftIndex, int rightIndex, StringBuilder left, StringBuilder right, char separator, char endOfString) {
-        StringBuilder first = new StringBuilder();
-        StringBuilder sec = new StringBuilder();
+
+    /**
+     * @param wholeText   text where we trying to get words
+     * @param leftIndex   index of word before 'separator'
+     * @param rightIndex  index of word after 'separator'
+     * @param separator   actually separator
+     * @param endOfString character that says that string is ended
+     * @return founded words
+     */
+    private static String getNextWords(String wholeText, int leftIndex, boolean searchInLeft, int rightIndex, boolean searchInRight, char separator, char endOfString) {
+
+        StringBuilder leftWordToAdd = new StringBuilder();
+        StringBuilder rightWordToAdd = new StringBuilder();
 
         boolean writeToFirst = true;
         boolean writeToSecond = true;
@@ -44,104 +107,146 @@ public class LanguageTextUtils {
         int j = rightIndex;
         int i = leftIndex;
 
-        for (;i >= 0 & j <= wholeText.length(); ) {
+        if (i <= 0) {
+            searchInLeft = false;
+        }
 
-            if (wholeText.charAt(i) == separator
-                    | wholeText.charAt(i) == endOfString) {
-                writeToFirst = false;
-            }
+        if (j > wholeText.length() - 1) {
+            searchInRight = false;
+        }
 
-            if (wholeText.charAt(j) == separator
-                    | wholeText.charAt(j) == endOfString) {
-                writeToSecond = false;
-            }
+        for (; ; ) {
+            if (searchInLeft) {
+                if (wholeText.charAt(i) == ' ') {
+                    writeToFirst = false;
+                    i--;
+                }
 
-
-            for (;;) {
-
-                if (wholeText.charAt(i) == ' '){
+                if (wholeText.charAt(i) == separator
+                        | wholeText.charAt(i) == endOfString) {
                     writeToFirst = false;
                 }
 
                 if (writeToFirst) {
-                    first.append(wholeText.charAt(i));
+                    leftWordToAdd.append(wholeText.charAt(i));
                     i--;
                 }
 
-                if (wholeText.charAt(j) == ' '){
+                if (i <= 0) {
+                    searchInLeft = false;
+                }
+            } else {
+                writeToFirst = false;
+            }
+
+            if (searchInRight) {
+                if (wholeText.charAt(j) == ' ') {
+                    writeToSecond = false;
+                    j++;
+                }
+
+                if (wholeText.charAt(j) == separator
+                        | wholeText.charAt(j) == endOfString) {
                     writeToSecond = false;
                 }
 
                 if (writeToSecond) {
-                    sec.append(wholeText.charAt(j));
+                    rightWordToAdd.append(wholeText.charAt(j));
                     j++;
                 }
 
-                if (!writeToFirst & !writeToSecond) {
-                    break;
+                if (j >= wholeText.length() - 1) {
+                    searchInRight = false;
                 }
+            } else {
+                writeToSecond = false;
             }
 
-            if (first.reverse().toString().toLowerCase().trim()
-                    .equals(sec.toString().toLowerCase().trim())) {
+            if (!writeToFirst & !writeToSecond) {
                 break;
             }
-
-            if (!writeToFirst & ! writeToSecond){
-                break;
-            }
-
         }
 
-        first.reverse();
+        leftWordToAdd.reverse();
 
-        String temp = left.toString();
-        left.delete(0, left.length());
-        left.append(first).append(temp);
-
-        String secTemp = right.toString();
-        right.delete(0, right.length());
-        right.append(secTemp).append(sec);
+        return leftWordToAdd.append('/').append(rightWordToAdd).toString();
     }
 
-    public static boolean isPartOfWord(int wordIndex, String wordToCheck, StringBuilder pair) {
-        return pair.charAt(wordIndex - 1) == ' '
-                & (pair.charAt(wordIndex + wordToCheck.length()) - 1) == ' ';
+    public static boolean isSingleWord(int wordIndex, String wordToCheck, StringBuilder pair, char separator, char endOfString) {
+        boolean freeBefore = false;
+        boolean freeAfter = false;
+
+        boolean leftFinded = false;
+        boolean rightFinded = false;
+
+        if (pair.charAt(wordIndex + wordToCheck.length()) == ' ') {
+            freeAfter = true;
+            rightFinded = true;
+        }
+
+        if (!rightFinded & pair.charAt(wordIndex + wordToCheck.length()) == '\t') {
+            freeAfter = true;
+            rightFinded = true;
+        }
+
+        if (!rightFinded & pair.charAt(wordIndex + wordToCheck.length()) == separator) {
+            freeAfter = true;
+            rightFinded = true;
+        }
+
+        if (!rightFinded & pair.charAt(wordIndex + wordToCheck.length()) == ',') {
+            freeAfter = true;
+            rightFinded = true;
+        }
+
+        if (!rightFinded & pair.charAt(wordIndex + wordToCheck.length()) == '.') {
+            freeAfter = true;
+            rightFinded = true;
+        }
+
+        if (!rightFinded & pair.charAt(wordIndex + wordToCheck.length()) == endOfString) {
+            freeAfter = true;
+        }
+
+        if (wordIndex == 0){
+            freeBefore = true;
+            leftFinded = true;
+        }
+
+        if (!leftFinded & wordIndex > 0) {
+            if (pair.charAt(wordIndex - 1) == ' ') {
+                freeBefore = true;
+                leftFinded = true;
+            }
+            if (!leftFinded & pair.charAt(wordIndex - 1) == '\t') {
+                freeBefore = true;
+                leftFinded = true;
+            }
+            if (!leftFinded & pair.charAt(wordIndex - 1) == ',') {
+                freeBefore = true;
+                leftFinded = true;
+            }
+            if (!leftFinded & pair.charAt(wordIndex - 1) == separator) {
+                freeBefore = true;
+            }
+        }
+
+        return freeBefore & freeAfter;
     }
 
     public static void cleanString(StringBuilder pair, String strSeparator) {
 
+        removeExcessSpaces(pair);
+        removeSpaceBeforeSeparators(pair, strSeparator);
+
         String deuText = pair.substring(0, pair.indexOf(strSeparator));
         String engText = pair.substring(pair.indexOf(strSeparator), pair.length());
-
-        deuText = clean(deuText.toCharArray());
-        engText = clean(engText.toCharArray());
 
         deuText = deuText.trim() + strSeparator;
         engText = engText.trim() + '\n';
 
         pair.delete(0, pair.length());
         pair.append(deuText.toLowerCase()).append(engText.toLowerCase());
-    }
-
-    private static String clean(char[] string) {
-
-        char charBefore = 'z';
-        char[] result = new char[string.length];
-        int j = 0;
-
-        for (int i = 0; i <= string.length - 1; i++) {
-            result[j] = string[i];
-            j++;
-
-            if (charBefore == ' ' & string[i] == ' ' & charBefore == string[i]) {
-                j--;
-            }
-
-            charBefore = string[i];
-        }
-
-        return new String(result);
     }
 
     public static boolean isSingleLangWord(StringBuilder pair, String strPairSeparator) {
@@ -163,26 +268,34 @@ public class LanguageTextUtils {
     }
 
     public static void removeExcessSpaces(StringBuilder pair) {
-
-        char[] charsArray = pair.toString().toCharArray();
-
-        char charBefore = 'z';
-        char[] result = new char[charsArray.length];
-        int j = 0;
-
-        for (int i = 0; i <= charsArray.length - 1; i++) {
-            result[j] = charsArray[i];
-            j++;
-
-            if (charBefore == ' ' & charsArray[i] == ' ' & charBefore == charsArray[i]) {
-                j--;
-            }
-
-            charBefore = charsArray[i];
-        }
+        String result = removeExcessSpaces(pair.toString().toCharArray());
 
         pair.delete(0, pair.length());
         pair.append(result);
+    }
+
+    public static String removeExcessSpaces(char[] toClean) {
+
+        char charBefore = 'z';
+        char[] result = new char[toClean.length];
+        int j = 0;
+
+        for (int i = 0; i <= toClean.length - 1; i++) {
+            if (i == 0 & toClean[i] == ' ') {
+                continue;
+            }
+
+            result[j] = toClean[i];
+            j++;
+
+            if (charBefore == ' ' & toClean[i] == ' ' & charBefore == toClean[i]) {
+                j--;
+            }
+
+            charBefore = toClean[i];
+        }
+
+        return new String(result);
     }
 
     public static String removeAllSpaces(String string) {
