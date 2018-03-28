@@ -1,6 +1,6 @@
 public class LanguageTextUtils {
 
-    public static void removeSpaceBeforeSeparators(StringBuilder pair, String separator) {
+    private static void removeSpaceBeforeSeparators(StringBuilder pair, String separator) {
         String[] separators = {" " + separator + " ", separator + " ", " " + separator, " / ", " /", "/ ", " // ", " //", "// ",};
 
         for (String symb : separators) {
@@ -42,13 +42,12 @@ public class LanguageTextUtils {
         boolean searchInLeft = true;
         boolean searchInRight = true;
 
-        int leftSearchIndex = index;
         int rightSearchIndex = index + 2;
 
         StringBuilder equal = new StringBuilder();
 
         for (; ; ) {
-            String newString = getNextWords(wholeText, leftSearchIndex, searchInLeft, rightSearchIndex, searchInRight, separator, endOfString);
+            String newString = getNextWords(wholeText, index, searchInLeft, rightSearchIndex, searchInRight, separator, endOfString);
 
             if (newString.equals("/")) {
                 break;
@@ -238,7 +237,7 @@ public class LanguageTextUtils {
         }
 
         if (engText.startsWith("-")){
-            
+            engText = pair.substring(1, pair.length());
         }
 
         deuText = deuText.trim() + strSeparator;
@@ -266,14 +265,14 @@ public class LanguageTextUtils {
         return true;
     }
 
-    public static void removeExcessSpaces(StringBuilder pair) {
+    private static void removeExcessSpaces(StringBuilder pair) {
         String result = removeExcessSpaces(pair.toString().toCharArray());
 
         pair.delete(0, pair.length());
         pair.append(result);
     }
 
-    public static String removeExcessSpaces(char[] toClean) {
+    private static String removeExcessSpaces(char[] toClean) {
 
         char charBefore = 'z';
         char[] result = new char[toClean.length];
@@ -297,7 +296,7 @@ public class LanguageTextUtils {
         return new String(result);
     }
 
-    public static String removeAllSpaces(String string) {
+    private static String removeAllSpaces(String string) {
         StringBuilder builder = new StringBuilder();
 
         for (int i = 0; i < string.length(); i++) {
@@ -356,7 +355,12 @@ public class LanguageTextUtils {
                 return PartsOfSpeech.SV;
             case TR:
                 return PartsOfSpeech.TR;
-
+            case BS:
+            case EL:
+            case HR:
+            case SQ:
+            case SR:
+            case UA:
             default:
                 return null;
         }
@@ -368,6 +372,6 @@ public class LanguageTextUtils {
         ES, FI, FR, HR, HU,
         IS, IT, LA, NL, NO,
         PL, PT, RO, SK, SQ,
-        SR, SV, TR;
+        SR, SV, TR
     }
 }

@@ -9,13 +9,13 @@ public class FileReader {
 
     public static void writeToFile(StringBuilder text, String path) {
         System.out.println("writing");
-        try(FileWriter writer = new FileWriter(path);) {
+        try(FileWriter writer = new FileWriter(path)) {
             writer.write(text.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     public static List<String> readFile(String pathFrom) {
         System.out.println("reading");
 

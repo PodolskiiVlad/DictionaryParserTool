@@ -1,14 +1,10 @@
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 public class DictParser {
 
     private static final String EMPTY_STRING = "";
     private static final int PAIR_NUMBER = 1000000;
-    private static int currentPair = 0;
-    private static int currentWritedPair = 0;
-    private static int count = 0;
 
     private String pathTo;
     private String pathFrom;
@@ -18,7 +14,7 @@ public class DictParser {
     private char endOfString;
 
     private StringBuilder finalText;
-    private Map<String, String> pairMap;
+    private HashSet<String> pairMap;
 
     private String[] customWordClasses;
     private String[] firstLangAbbrs;
@@ -44,7 +40,7 @@ public class DictParser {
         this.translationLang = translationLang;
         strPairSeparator = new String(new char[]{chPairSeparator});
         finalText = new StringBuilder(PAIR_NUMBER * 10);
-        pairMap = new HashMap<>(PAIR_NUMBER);
+        pairMap = new HashSet<>(PAIR_NUMBER);
     }
 
     public void processFile() {
@@ -68,13 +64,11 @@ public class DictParser {
                 boolean isSingleLangWord = !checkForSingleWords || LanguageTextUtils.isSingleLangWord(pair, strPairSeparator);
 
                 String originWord = pair.substring(0, pair.indexOf(strPairSeparator));
-                boolean isMapContainsKey = pairMap.containsKey(originWord);
+                boolean isMapContainsKey = pairMap.contains(originWord);
 
                 if (!isMapContainsKey & pair.length() < 40 & validate(pair) & isSingleLangWord) {
                     finalText.append(pair);
-                    pairMap.put(originWord, "s");
-                    currentWritedPair++;
-                    count++;
+                    pairMap.add(originWord);
                 }
             }
             pair.delete(0, pair.length());
