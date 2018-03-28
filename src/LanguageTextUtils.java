@@ -87,15 +87,6 @@ public class LanguageTextUtils {
         }
     }
 
-
-    /**
-     * @param wholeText   text where we trying to get words
-     * @param leftIndex   index of word before 'separator'
-     * @param rightIndex  index of word after 'separator'
-     * @param separator   actually separator
-     * @param endOfString character that says that string is ended
-     * @return founded words
-     */
     private static String getNextWords(String wholeText, int leftIndex, boolean searchInLeft, int rightIndex, boolean searchInRight, char separator, char endOfString) {
 
         StringBuilder leftWordToAdd = new StringBuilder();
@@ -242,6 +233,14 @@ public class LanguageTextUtils {
         String deuText = pair.substring(0, pair.indexOf(strSeparator));
         String engText = pair.substring(pair.indexOf(strSeparator), pair.length());
 
+        if (deuText.startsWith("-")){
+            deuText = pair.substring(1, pair.indexOf(strSeparator));
+        }
+
+        if (engText.startsWith("-")){
+            
+        }
+
         deuText = deuText.trim() + strSeparator;
         engText = engText.trim() + '\n';
 
@@ -259,7 +258,7 @@ public class LanguageTextUtils {
                 wordsCount++;
             }
 
-            if (wordsCount > 1) {
+            if (wordsCount > 0) {
                 return false;
             }
         }

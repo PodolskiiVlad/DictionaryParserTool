@@ -8,6 +8,7 @@ public class DictParser {
     private static final int PAIR_NUMBER = 1000000;
     private static int currentPair = 0;
     private static int currentWritedPair = 0;
+    private static int count = 0;
 
     private String pathTo;
     private String pathFrom;
@@ -55,6 +56,7 @@ public class DictParser {
         }
 
         text.forEach(n -> {
+
             pair.append(n);
 
             if (!pair.toString().endsWith(String.valueOf(endOfString))) {
@@ -66,16 +68,15 @@ public class DictParser {
                 boolean isSingleLangWord = !checkForSingleWords || LanguageTextUtils.isSingleLangWord(pair, strPairSeparator);
 
                 String originWord = pair.substring(0, pair.indexOf(strPairSeparator));
-                validate(pair);
-                boolean isMapContainsKey = !pairMap.containsKey(originWord);
+                boolean isMapContainsKey = pairMap.containsKey(originWord);
 
-                if (isSingleLangWord & isMapContainsKey & pair.length() < 40) {
+                if (!isMapContainsKey & pair.length() < 40 & validate(pair) & isSingleLangWord) {
                     finalText.append(pair);
+                    pairMap.put(originWord, "s");
                     currentWritedPair++;
+                    count++;
                 }
-
             }
-
             pair.delete(0, pair.length());
         });
 
@@ -83,21 +84,22 @@ public class DictParser {
     }
 
     private boolean validate(StringBuilder pair) {
-        String firstPart = pair.substring(0, pair.charAt(chPairSeparator)).trim();
-        String secondPart = pair.substring(pair.charAt(chPairSeparator), pair.length()).trim();
+        String firstPart = pair.substring(0, pair.indexOf(strPairSeparator)).trim();
+        String secondPart = pair.substring(pair.indexOf(strPairSeparator), pair.length()).trim();
 
-        if (firstPart.equals(strPairSeparator) | firstPart.length() == 0 | firstPart.equals(strPairSeparator+endOfString)){
+        firstPart = firstPart.replace(strPairSeparator, EMPTY_STRING);
+        firstPart = firstPart.replace(new String(new char[]{endOfString}), EMPTY_STRING);
+        firstPart = firstPart.replace(" ", EMPTY_STRING);
 
-        }
-        return true;
+        secondPart = secondPart.replace(strPairSeparator, EMPTY_STRING);
+        secondPart = secondPart.replace(new String(new char[]{endOfString}), EMPTY_STRING);
+        secondPart = secondPart.replace(" ", EMPTY_STRING);
+
+        return firstPart.length() != 0 && secondPart.length() != 0;
     }
 
     private boolean parse(StringBuilder pair) {
         System.out.println("Parsing");
-
-        if (pair.toString().contains("M&A-Transaktionen")) {
-            System.out.println("Notice");
-        }
 
         LanguageTextUtils.cleanString(pair, strPairSeparator);
         checkForExcessStrings(pair);
@@ -114,12 +116,6 @@ public class DictParser {
         LanguageTextUtils.lastClean(pair, strPairSeparator);
         checkWordsToRemove(pair);
         LanguageTextUtils.cleanString(pair, strPairSeparator);
-
-        System.out.println("String = " + pair);
-        currentPair++;
-        System.out.println("Current pair = " + currentPair);
-        System.out.println("Current wr pair = " + currentWritedPair);
-
         return true;
     }
 
@@ -217,11 +213,15 @@ public class DictParser {
         if (firstAbbrs != null) {
             for (String abbr : firstAbbrs) {
                 while (pair.indexOf(abbr, fromIndex) != -1 & pair.indexOf(abbr, fromIndex) < pair.indexOf(strPairSeparator)) {
-
                     newVal = pair.indexOf(abbr, fromIndex);
                     int match = pair.indexOf(abbr, fromIndex);
 
                     if (match == -1) {
+                        continue;
+                    }
+
+                    if (LanguageTextUtils.isSingleLangWord(pair, strPairSeparator)){
+                        fromIndex++;
                         continue;
                     }
 
@@ -277,7 +277,7 @@ public class DictParser {
                     continue;
                 }
 
-                pair.replace(pair.indexOf(symb), pair.indexOf(symb) + symb.length(), " ");
+                pair.replace(matchIndex, matchIndex + symb.length(), " ");
             }
         }
 
@@ -290,10 +290,6 @@ public class DictParser {
         for (String letter : PartsOfSpeech.SINGLE_SYMBOLS) {
             int fromIndex = 0;
             while (pair.indexOf(letter, fromIndex) != -1) {
-
-                if (letter.equals("a")){
-                    System.out.println("Notice");
-                }
 
                 int match = pair.indexOf(letter, fromIndex);
 

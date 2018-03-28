@@ -1,6 +1,6 @@
 public class Main {
     private static final String PATH_FROM = "/home/kaa-developer/Рабочий стол/from.txt";
-    private static final String PATH_TO = "/home/kaa-developer/Рабочий стол/to.txt";
+    private static final String PATH_TO = "/home/kaa-developer/Рабочий стол/toBinary";
 
     public static void main(String[] args) {
 
